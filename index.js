@@ -32,9 +32,7 @@ app.use(
     extended: true,
   })
 );
-app.use('/', (req, res) => {
-  res.send('hello');
-});
+
 app.use('/uploads', express.static('uploads'));
 app.use('/profiles', express.static('profiles'));
 
@@ -46,7 +44,6 @@ app.use((error, req, res, next) => {
   const message = error.message;
   res.status(status).json({ message: message });
 });
-app.get('/',(req,res)=>{res.send('heeeeeey stupid')})
 app.use('/managment', managmentRoute);
 app.use('/shop', shopRoute);
 app.use('/', profileRoute);
