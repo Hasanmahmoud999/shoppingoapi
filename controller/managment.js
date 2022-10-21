@@ -90,7 +90,7 @@ function sortPrice(arraypayments, typedate) {
 //@view   public
 exports.addIncome = async (req, res, next) => {
   const error = validationResult(req);
-  const user=await User.findById(req.userId)
+  const user = await User.findById(req.userId);
   if (!error.isEmpty()) {
     const error = new Error('enter valid things');
     error.statusCode = 422;
@@ -104,7 +104,7 @@ exports.addIncome = async (req, res, next) => {
       // console.log(user)
       user.income += +value;
       user.totalBalance += +value;
-      console.log("add befor",user.income)
+      console.log('add befor', user.income);
       user.save();
       res.status(201).json({ message: 'income is added', user: user });
     })
@@ -119,7 +119,7 @@ exports.addIncome = async (req, res, next) => {
 exports.addPayment = (req, res, next) => {
   const error = validationResult(req);
   // const user=await User.findById(req.userId);
-  
+
   if (!error.isEmpty()) {
     const error = new Error('enter valid things');
     error.statusCode = 422;
@@ -191,26 +191,28 @@ exports.addPaymentReq = async (req, res, next) => {
       typeMessage = 'You must pay the full amount this month';
     } else {
       numOfMonthRepeater = Math.ceil(getMonthDifference(dateNow, endDate));
-      everyPaidValueRepeater =Math.floor( (value / numOfMonthRepeater).toString());
+      everyPaidValueRepeater = Math.floor(
+        (value / numOfMonthRepeater).toString()
+      );
       typeMessage = `you must pay ${everyPaidValueRepeater} over ${numOfMonthRepeater} months`;
     }
   } else {
     typeMessage = `One-time payment`;
-    everyPaidValueRepeater=0;
-    numOfMonthRepeater=0;
+    everyPaidValueRepeater = 0;
+    numOfMonthRepeater = 0;
   }
   const paymentReq = new PaymentReq({
     name: name,
     value: value,
     date: date,
     type: type,
-    isRepeater: (isRepeater ? 1 : 0),
+    isRepeater: isRepeater ? 1 : 0,
     numOfMonthRepeater: numOfMonthRepeater,
     everyPaidValueRepeater: everyPaidValueRepeater,
     paymentuntilnow: 0,
     almotabaki: value,
     typeMessage: typeMessage,
-    Ispaied:0
+    Ispaied: 0,
   });
   paymentReq.save();
   User.findById(req.userId)
@@ -258,22 +260,16 @@ exports.getpayments = async (req, res, next) => {
 //@desc   get all reqapayments
 //@view   public
 exports.getreqpayments = async (req, res, next) => {
-
   const now = new Date();
   const payreq = await User.findById(req.userId).populate('paymentsReq');
   // console.log(now.getDate())
-  if(now.getDate()===1)
-  {
-
-   
-    payreq.paymentsReq.forEach(p=>{
-      p.Ispaied=0;
-    })
-    payreq.save()
-    
-
+  if (now.getDate() === 1) {
+    payreq.paymentsReq.forEach((p) => {
+      p.Ispaied = 0;
+    });
+    payreq.save();
   }
-//  console.log(payreq)
+  //  console.log(payreq)
   if (!payreq) {
     necessorymessage = 'you do not have any payment';
   }
@@ -290,8 +286,8 @@ exports.getreqpayments = async (req, res, next) => {
   res.json({
     payreq: filter,
     user,
-   
-});}
+  });
+};
 //@router get
 //@desc   get data for dashboard
 //@view   public
@@ -303,7 +299,7 @@ exports.getdatadashboard = async (req, res, next) => {
   const pay = await User.findById(req.userId).populate('payments');
   const payreq = await User.findById(req.userId).populate('paymentsReq');
   const now = new Date();
- 
+
   // user.totalBalance = user.income - user.totalPayments;
   // user.save();
   // count percent for every category
@@ -339,7 +335,7 @@ exports.getdatadashboard = async (req, res, next) => {
     if (+a.value > +b.value) return -1;
     return 0;
   });
-  console.log(user.totalBalance)
+  console.log(user.totalBalance);
   all.push({
     totalBalance: user.totalBalance,
     totalPayments: user.totalPayments,
@@ -437,45 +433,45 @@ exports.addinstallment = async (req, res, next) => {
   // console.log(typeof(id))
   const now = new Date();
   const paymentReq = await PaymentReq.findById(id);
-  const user=await User.findById(req.userId);
+  const user = await User.findById(req.userId);
   paymentReq.numOfMonthRepeater = getMonthDifference(
     now,
     new Date(paymentReq.date)
   );
   const necessarymessage = [];
   const { payment } = req.body;
-  console.log(payment)
+  console.log(payment);
   if (paymentReq.isRepeater === 0) {
     necessarymessage.push('you are complete all this installment');
     const id1 = mongoose.Types.ObjectId(id);
-    console.log(user.totalBalance,user.totalPayments)
-    user.totalPayments+=(+payment);
-    user.totalBalance-=(+payment);
+    console.log(user.totalBalance, user.totalPayments);
+    user.totalPayments += +payment;
+    user.totalBalance -= +payment;
     var index = user.paymentsReq.indexOf(id1);
-if (index !== -1) {
-  user.paymentsReq.splice(index, 1);
-}
-    user.save()
+    if (index !== -1) {
+      user.paymentsReq.splice(index, 1);
+    }
+    user.save();
     await PaymentReq.deleteOne({ _id: id1 });
 
     res.json({
       necessarymessage: necessarymessage,
-      message:"deleting"
+      message: 'deleting',
     });
   } else {
     // const id1 = mongoose.Types.ObjectId(id);
-    paymentReq.paymentuntilnow = (+paymentReq.paymentuntilnow) + (+payment);
+    paymentReq.paymentuntilnow = +paymentReq.paymentuntilnow + +payment;
     paymentReq.almotabaki = +paymentReq.value - +paymentReq.paymentuntilnow;
-    paymentReq.numOfMonthRepeater = (+paymentReq.numOfMonthRepeater) - 1;
-    paymentReq.Ispaied=1;
+    paymentReq.numOfMonthRepeater = +paymentReq.numOfMonthRepeater - 1;
+    paymentReq.Ispaied = 1;
     paymentReq.save();
-   
+
     if (+paymentReq.numOfMonthRepeater === 0 && +paymentReq.almotabaki > 0) {
       necessarymessage.push('you must pay all payments ,the time has expired');
       necessarymessage.push('you are pay for this Month');
-      user.totalPayments+=(+payment);
-      user.totalBalance-=(+payment);
-      user.save()
+      user.totalPayments += +payment;
+      user.totalBalance -= +payment;
+      user.save();
       res.json({
         paymentReq: paymentReq,
         necessarymessage: necessarymessage,
@@ -484,24 +480,24 @@ if (index !== -1) {
       necessarymessage.push('you are complete all this installment');
       const id1 = mongoose.Types.ObjectId(id);
       await PaymentReq.deleteOne({ _id: id1 });
-      user.totalPayments+=(+payment);
-      user.totalBalance-=(+payment);
-      
+      user.totalPayments += +payment;
+      user.totalBalance -= +payment;
+
       var index = user.paymentsReq.indexOf(id1);
       if (index !== -1) {
         user.paymentsReq.splice(index, 1);
       }
-      user.save()
+      user.save();
 
       res.json({
         necessarymessage: necessarymessage,
       });
     } else {
       // console.log("o")
-      user.totalPayments+=(+payment);
-      user.totalBalance-=(+payment);
+      user.totalPayments += +payment;
+      user.totalBalance -= +payment;
       // console.log(user.totalPayments)
-      user.save()
+      user.save();
       necessarymessage.push('you are pay for this Month');
       res.json({
         paymentReq: paymentReq,
@@ -514,7 +510,7 @@ exports.addmonthlyinstallment = async (req, res, next) => {
   const id = req.params['id'];
   const now = new Date();
   const paymentReq = await PaymentReq.findById(id);
-  const user=await User.findById(req.userId)
+  const user = await User.findById(req.userId);
   paymentReq.numOfMonthRepeater = getMonthDifference(
     now,
     new Date(paymentReq.date)
@@ -526,10 +522,10 @@ exports.addmonthlyinstallment = async (req, res, next) => {
     paymentReq.paymentuntilnow =
       +paymentReq.paymentuntilnow + +paymentReq.everyPaidValueRepeater;
     paymentReq.almotabaki = +paymentReq.value - +paymentReq.paymentuntilnow;
-    paymentReq.numOfMonthRepeater = (+paymentReq.numOfMonthRepeater) - 1;
-    paymentReq.Ispaied=1;
-    user.totalPayments+=(+paymentReq.everyPaidValueRepeater);
-    user.totalBalance-=(+paymentReq.everyPaidValueRepeater);
+    paymentReq.numOfMonthRepeater = +paymentReq.numOfMonthRepeater - 1;
+    paymentReq.Ispaied = 1;
+    user.totalPayments += +paymentReq.everyPaidValueRepeater;
+    user.totalBalance -= +paymentReq.everyPaidValueRepeater;
     // user.save()
 
     paymentReq.save();
@@ -538,17 +534,16 @@ exports.addmonthlyinstallment = async (req, res, next) => {
       +paymentReq.paymentuntilnow + +paymentReq.almotabaki;
     paymentReq.almotabaki = +paymentReq.value - +paymentReq.paymentuntilnow;
     paymentReq.numOfMonthRepeater = +paymentReq.numOfMonthRepeater - 1;
-    paymentReq.Ispaied=1;
+    paymentReq.Ispaied = 1;
     paymentReq.save();
-    user.totalPayments+=(+paymentReq.almotabaki);
-    user.totalBalance-=(+paymentReq.almotabaki);
+    user.totalPayments += +paymentReq.almotabaki;
+    user.totalBalance -= +paymentReq.almotabaki;
     // user.save()
-
   }
   if (+paymentReq.numOfMonthRepeater === 0 && +paymentReq.almotabaki > 0) {
     necessarymessage.push('you must pay all payments ,the time has expired');
     necessarymessage.push('you are pay for this Month');
-    user.save()
+    user.save();
     res.json({
       paymentReq: paymentReq,
       necessarymessage: necessarymessage,
@@ -586,19 +581,16 @@ exports.deleteinstallment = async (req, res, next) => {
   user.save();
   await PaymentReq.deleteOne({ _id: id1 });
   // const paymentReq = await PaymentReq.findById(id);
-  res.json(
-    "deleting"
-  );
-
+  res.json('deleting');
 };
 exports.updateinstallment = async (req, res, next) => {
   const id = req.params['id'];
-   const { name, value, date, isRepeater,type } = req.body;
+  const { name, value, date, isRepeater, type } = req.body;
   const paymentReq = await PaymentReq.findById(id);
   const monthly = paymentReq.paymentuntilnow;
   const all = paymentReq.almotabaki;
   if (name) paymentReq.name = name;
-   if(type)paymentReq.type=type;
+  if (type) paymentReq.type = type;
   if (value) {
     paymentReq.value = value;
     paymentReq.numOfMonthRepeater = getMonthDifference(
@@ -607,7 +599,7 @@ exports.updateinstallment = async (req, res, next) => {
     );
     paymentReq.everyPaidValueRepeater =
       paymentReq.value / paymentReq.numOfMonthRepeater;
-    paymentReq.almotabaki = (+paymentReq.value) - (+paymentReq.paymentuntilnow);
+    paymentReq.almotabaki = +paymentReq.value - +paymentReq.paymentuntilnow;
   }
   if (date) {
     paymentReq.date = date;
@@ -616,9 +608,9 @@ exports.updateinstallment = async (req, res, next) => {
       new Date(paymentReq.date)
     );
     paymentReq.everyPaidValueRepeater =
-      (+paymentReq.value) / (+paymentReq.numOfMonthRepeater);
+      +paymentReq.value / +paymentReq.numOfMonthRepeater;
   }
-  if (isRepeater===false||isRepeater===true) {
+  if (isRepeater === false || isRepeater === true) {
     // console.log("ui")
     paymentReq.isRepeater = isRepeater;
     paymentReq.numOfMonthRepeater = getMonthDifference(
@@ -626,9 +618,9 @@ exports.updateinstallment = async (req, res, next) => {
       new Date(paymentReq.date)
     );
     paymentReq.everyPaidValueRepeater =
-    (+paymentReq.value) / (+paymentReq.numOfMonthRepeater);
+      +paymentReq.value / +paymentReq.numOfMonthRepeater;
     paymentReq.paymentuntilnow = 0;
-    paymentReq.almotabaki = (+paymentReq.value);
+    paymentReq.almotabaki = +paymentReq.value;
   }
   // console.log("l")
   paymentReq.save();
@@ -649,10 +641,10 @@ exports.updatePayReq = async (req, res, next) => {
 exports.getSellerDash = async (req, res, next) => {
   const user = await User.findById(req.userId);
   console.log(user, 'from dash*******************************');
-  const seller = await Seller.findOne({ infoUser: user._id }).populate(
+  const seller = await Seller.findOne({ infoUser: req.userId }).populate(
     'sellerProducts'
   );
-  // console.log(seller);
+  console.log(seller);
   // console.log(seller._id);
   // res.json(seller.sellerProducts);
   const payments = await Payment.find({ sellerId: seller._id.toString() });
@@ -730,7 +722,7 @@ exports.getSellerDash = async (req, res, next) => {
       }
     });
     let info = {
-      productId:product._id,
+      productId: product._id,
       productCateg: product.description,
       oldPrice: price2,
       newPrice: price1,
