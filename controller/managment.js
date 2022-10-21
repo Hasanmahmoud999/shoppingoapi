@@ -641,10 +641,10 @@ exports.updatePayReq = async (req, res, next) => {
 exports.getSellerDash = async (req, res, next) => {
   const user = await User.findById(req.userId);
   console.log(user, 'from dash*******************************');
-  const seller = await Seller.findOne({ infoUser: req.userId }).populate(
+  const seller = await Seller.findOne({ infoUser: user._id }).populate(
     'sellerProducts'
   );
-  console.log(seller);
+  // console.log(seller);
   // console.log(seller._id);
   // res.json(seller.sellerProducts);
   const payments = await Payment.find({ sellerId: seller._id.toString() });
